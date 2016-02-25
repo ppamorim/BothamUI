@@ -10,10 +10,4 @@ import Foundation
 import UIKit
 
 class CharactersNavigationController: UINavigationController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        let homeViewController = AppDelegate.service.provideCharactersViewController()
-        pushViewController(homeViewController, animated: false)
-    }
 }

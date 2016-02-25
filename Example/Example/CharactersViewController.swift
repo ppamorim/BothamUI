@@ -10,12 +10,18 @@ import Foundation
 import UIKit
 import BothamUI
 
-class CharactersViewController: BothamViewController<CharactersPresenter>, BothamTableViewController, CharactersUI {
+class CharactersViewController: ExampleViewController, BothamTableViewController, CharactersUI {
+    
     @IBOutlet var tableView: UITableView!
     var dataSource: BothamTableViewDataSource<Character, CharacterTableViewCell>!
+    var delegate: UITableViewDelegate!
 
     override func viewDidLoad() {
         tableView.dataSource = dataSource
+        tableView.delegate = delegate
+        tableView.tableFooterView = UIView()
+        tableView.accessibilityLabel = "CharactersTableView"
+        pullToRefreshHandler.addTo(tableView)
         super.viewDidLoad()
     }
 }

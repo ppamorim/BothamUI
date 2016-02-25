@@ -12,27 +12,77 @@ import BothamUI
 
 class ServiceLocator {
 
-    func provideMainWireframe() -> MainWireframe {
-        return MainWireframe()
+    static let sharedInstance = ServiceLocator()
+    let navigatorContainer = BothamNavigatorContainer()
+
+    private init() { }
+
+    private func provideMainStoryboard() -> BothamStoryboard {
+        return BothamStoryboard(name: "Main")
     }
 
-    func provideInitialViewControllerFromStoryboard() -> UITabBarController {
-        let mainWireframe = provideMainWireframe()
-        return mainWireframe.initialViewControllerFromStoryboard()
+    private func provideCharactersWireframe() -> CharactersWireframe {
+        return CharactersWireframe()
     }
 
-    func provideHomeViewController() -> HomeViewController {
-        let mainWireframe = provideMainWireframe()
-        let viewController: HomeViewController = mainWireframe.viewControllerFromStoryboard()
-        viewController.presenter = HomePresenter(wireframe: mainWireframe, ui: viewController)
+    private func provideSeriesWireframe() -> SeriesWireframe {
+        return SeriesWireframe()
+    }
+
+    func provideCharactersNavigator() -> CharactersNavigationController? {
+        return navigatorContainer.resolve()
+    }
+
+    func provideSeriesNavigator() -> SeriesNavigationController? {
+        return navigatorContainer.resolve()
+    }
+
+    func provideRootTabBarController() -> UITabBarController {
+        let viewController: UITabBarController = provideMainStoryboard().instantiateViewController("RootTabBarController")
         return viewController
+    }
+
+    func provideCharactersNavigationController() -> CharactersNavigationController {
+        let viewController = provideCharactersViewController()
+        return CharactersNavigationController(rootViewController: viewController)
+    }
+
+    func provideSeriesNavigationController() -> SeriesNavigationController {
+        let viewController = provideSeriesViewController()
+        return SeriesNavigationController(rootViewController: viewController)
+    }
+
+    private func provideCharactersTableViewDataSource() -> BothamTableViewDataSource<Character, CharacterTableViewCell> {
+        return BothamTableViewDataSource()
     }
 
     func provideCharactersViewController() -> CharactersViewController {
-        let mainWireframe = provideMainWireframe()
-        let viewController: CharactersViewController = mainWireframe.viewControllerFromStoryboard()
-        viewController.presenter = CharactersPresenter(ui: viewController)
-        viewController.dataSource = BothamTableViewDataSource()
+        let viewController: CharactersViewController = provideMainStoryboard().instantiateViewController()
+        let presenter = CharactersPresenter(ui: viewController, wireframe: provideCharactersWireframe())
+        viewController.presenter = presenter
+        let dataSource = provideCharactersTableViewDataSource()
+        viewController.dataSource = dataSource
+        viewController.pullToRefreshHandler = BothamPullToRefreshHandler(presenter: presenter)
         return viewController
+    }
+
+    func provideSeriesViewController() -> SeriesViewController {
+        let viewController: SeriesViewController = provideMainStoryboard().instantiateViewController()
+        let presenter = SeriesPresenter(ui: viewController, wireframe: SeriesWireframe())
+        viewController.presenter = presenter
+        let dataSource = BothamTableViewDataSource<Series, SeriesTableViewCell>()
+        viewController.dataSource = dataSource
+        viewController.delegate = BothamTableViewNavigationDelegate(dataSource: dataSource, presenter: presenter)
+        return viewController
+    }
+
+    func provideSeriesDetailViewController(seriesName: String) -> SeriesDetailViewController {
+        let viewController: SeriesDetailViewController = provideMainStoryboard().instantiateViewController("SeriesDetailViewController")
+        viewController.presenter = provideSeriesDetailPresenter(viewController, seriesName: seriesName)
+        return viewController
+    }
+
+    func provideSeriesDetailPresenter(ui: SeriesDetailUI, seriesName: String) -> SeriesDetailPresenter {
+        return SeriesDetailPresenter(ui: ui,seriesName: seriesName)
     }
 }
